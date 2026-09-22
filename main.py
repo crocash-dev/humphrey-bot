@@ -758,9 +758,10 @@ async def quote_public(ctx):
     return_string = "```" + random_message.content + "```"
     await ctx.send(return_string)
 
+
 @bot.command(description="moo")
 async def moo(ctx):
-
+    """Moo!"""
     moo_cow = r"""
          (__)
          (oo)
