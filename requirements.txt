@@ -1,0 +1,6 @@
+discord.py
+python-dotenv
+random
+Wikipedia-API
+cyrtrabslit
+aiohttp
