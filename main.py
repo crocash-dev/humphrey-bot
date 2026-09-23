@@ -39,16 +39,21 @@ commands_message_count = defaultdict(int)
 
 ROLES = [
     "blue",
+    "light-cornflower-blue",
+    "red",
+    "dark-red",
     "pink",
+    "light-pink",
+    "mexican-pink",
     "purple",
+    "dark-purple",
     "green",
+    "bright-green",
+    "dark-green",
+    "chartreuse",
     "orange",
     "yellow",
-    "dark-purple",
-    "dark-green",
-    "dark-red",
-    "red",
-    "dark-grey"
+    "dark-grey",
 ]
 
 my_commands = [
