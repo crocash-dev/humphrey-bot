@@ -3,7 +3,8 @@ import os
 import random
 import logging
 import re
-
+import time
+import datetime
 import asyncio
 from collections import defaultdict
 import aiohttp
@@ -17,8 +18,8 @@ import wikipediaapi
 import cyrtranslit
 from ddgs import DDGS
 
-# Debug const: if False, do not load data on boot, for quick
 # testing and debugging.
+# Debug const: if False, do not load data on boot, for quick
 LOAD_DATA = True
 BOT_USERNAMES = ("MCbot#9631", "humphrey-bot#5757")
 
@@ -68,6 +69,7 @@ my_commands = [
     "!fun_echo",
     "!length",
     "!quote_rinpoche",
+    "!search",
     "!wiki",
     "!yt",
     "!img",
@@ -77,7 +79,8 @@ my_commands = [
     "!len_line",
     "!chat_pie",
     "!command_pie",
-    "!command_bar"
+    "!command_bar",
+    "!sober"
 ]
 
 
@@ -637,11 +640,13 @@ async def list_colours(ctx):
     await ctx.send(ROLES)
 
 
-# Image search functions
+# DDGS search functions
 
+# DDGS object for use in functions
 ddgs = DDGS()
 
 
+# Img search
 @bot.command(description="Search DuckDuckGo for an image!")
 async def img(ctx, *, query: str):
     """Have Humphrey find you an image!"""
@@ -657,6 +662,20 @@ async def img(ctx, *, query: str):
     rand_url = random.choice(urls)
     print(rand_url)
     await ctx.send(str(rand_url))
+
+
+# Text search
+@bot.command(description="Search DuckDuckGo!")
+async def search(ctx, *, query: str):
+    """Have Humphrey search the web!"""
+    results = ddgs.text(query=query, max_results=50)
+    if not results:
+        await ctx.send("I am sorry, no urls were found.")
+        return
+    print(results)
+    prelim_result = random.choice(results)
+    return_value = prelim_result['href']
+    await ctx.send(return_value)
 
 
 # Random meme
@@ -779,4 +798,14 @@ async def moo(ctx):
 
     await ctx.send(f"```{moo_cow}```")
 
+
+@bot.command(description="Have Humphrey tell you days since Joe got dunk.")
+async def sober(ctx):
+    now = time.time()
+    difference = now - 1790759144
+
+    minutes_sober = difference / 60
+    hours_sober = round(minutes_sober / 60, 2)
+    await ctx.send(f"Joe has been sober for {hours_sober} hours.")
+    
 bot.run(token, log_handler=handler, log_level=logging.DEBUG)
