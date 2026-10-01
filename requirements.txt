@@ -5,3 +5,4 @@ Wikipedia-API
 cyrtrabslit
 aiohttp
 ddgs
+pytz

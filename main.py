@@ -4,12 +4,15 @@ import random
 import logging
 import re
 import time
-import datetime
+from datetime import datetime
 import asyncio
 from collections import defaultdict
 import aiohttp
 import matplotlib.pyplot as plt
 import discord
+
+from pytz import timezone
+import pytz
 from discord.ext import commands
 
 from dotenv import load_dotenv
@@ -80,7 +83,10 @@ my_commands = [
     "!chat_pie",
     "!command_pie",
     "!command_bar",
-    "!sober"
+    "!sober",
+    "!sober_totals",
+    "!timezones",
+    "!find_time"
 ]
 
 
@@ -800,13 +806,90 @@ async def moo(ctx):
     await ctx.send(f"```{moo_cow}```")
 
 
-@bot.command(description="Have Humphrey tell you days since Joe got dunk.")
-async def sober(ctx):
+@bot.command(description="Have Humphrey tell you totals of time units since Joe got dunk.")
+async def sober_totals(ctx):
     now = time.time()
     difference = now - 1790759144
 
-    minutes_sober = difference / 60
-    hours_sober = round(minutes_sober / 60, 2)
-    await ctx.send(f"Joe has been sober for {hours_sober} hours.")
+    minutes_sober = round(difference / 60)
+    hours_sober = round(minutes_sober / 60)
+    remaining_minutes = round(minutes_sober % 60)
+    if remaining_minutes == 60:
+        remaining_minutes = 0
+    days = round(hours_sober / 24, 2)
+    if days < 0:
+        days = 0
+    weeks = round(days / 7)
+    if weeks < 0:
+        weeks = 0
+    months = round(weeks / 4)
+    years = round(months / 12)
+    return_string = fr"""Joe has been sober for totals of:
+    ```
+    .---------------------------.
+      UNIT      |    TOTAL
+    .---------------------------.
+      Years     |    {years}
+      Months    |    {months}
+      Weeks     |    {weeks}
+      Days      |    {days}
+      Hours     |    {hours_sober}
+      Minutes   |    {minutes_sober}
+    .---------------------------.```"""
+    await ctx.send(return_string)
+
+
+@bot.command(description="Have Humphrey tell you how long Joe has been sober.")
+async def sober(ctx):
+    """Have Humphrey tell you how long Joe has been sober."""
+    # Calculation of seconds since sober
+    epoch_time_last_drunk = 1790759144
+    now = time.time()
+    difference = now - epoch_time_last_drunk
     
+    total_minutes = difference / 60
+    total_hours = round(total_minutes // 60)
+    minutes = round(total_minutes % 60)
+    total_days = round(total_hours // 24)
+    hours = round(total_hours % 24)
+    total_weeks = round(total_days // 7)
+    days = round(total_days % 7)
+    total_months = round(total_weeks // 4)
+    weeks = round(total_weeks % 4)
+    total_years = round(total_months // 12)
+    months = round(total_months % 12)
+    
+    return_string = f"Joe has been sober for: {total_years} years, {months} months, {weeks} weeks, {days} days, {hours} hours and {minutes} minutes."
+    await ctx.send(return_string)
+
+
+# Timezone functions
+
+def list_timezones():
+    timezone_list = []
+    for tz in pytz.all_timezones:
+        print(tz)
+        timezone_list.append(tz)
+    return timezone_list
+
+
+@bot.command(description="Have Humphrey list useable timezones for !find_time command")
+async def timezones(ctx):
+    """Have Humphrey list useable timezones for !find_time command"""
+    await ctx.send("https://gist.github.com/heyalexej/8bf688fd67d7199be4a1682b3eec7568")
+
+
+@bot.command(description="Find the time right now in any of the timezones listed by !timezones.")
+async def find_time(ctx, *, zone: str):
+    """Find the time right now in any of the timezones listed by !timezones."""
+    timezone_list = list_timezones()
+    print(f"!find_time: {timezone_list}")
+    if zone not in timezone_list:
+        await ctx.send("That's not a valid timezone, I'm afraid.")
+        return
+    utc_now = datetime.now(pytz.utc)
+    chosen_tz = timezone(zone)
+    converted_time = utc_now.astimezone(chosen_tz)
+    await ctx.send(converted_time)
+
 bot.run(token, log_handler=handler, log_level=logging.DEBUG)
