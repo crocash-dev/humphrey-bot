@@ -220,6 +220,7 @@ INSTAGRAM_URL = re.compile(
     re.IGNORECASE
 )
 
+
 # in a @bot.listen to prevent commands not running
 @bot.listen("on_message")
 async def my_on_message(message):
@@ -237,26 +238,26 @@ async def my_on_message(message):
         await message.channel.send(
             f"You know {message.author.name}, it is better that everyone get along.")
     # Embed insta-links
-    if matches_insta_link:
-        fixed_links = []
-        for url in matches_insta_link:
-            # Preserve the path while changing the hostname
-            fixed_url = re.sub(
-                r"https?://(?:www\.)?instagram\.com",
-                "https://www.hhinstagram.com",
-                url,
-                flags=re.IGNORECASE
-            )
-            fixed_url = fixed_url.split("?")[0]
-            fixed_links.append(fixed_url)
+    # if matches_insta_link:
+    #     fixed_links = []
+    #     for url in matches_insta_link:
+    #         # Preserve the path while changing the hostname
+    #         fixed_url = re.sub(
+    #             r"https?://(?:www\.)?instagram\.com",
+    #             "https://www.hhinstagram.com",
+    #             url,
+    #             flags=re.IGNORECASE
+    #         )
+    #         fixed_url = fixed_url.split("?")[0]
+    #         fixed_links.append(fixed_url)
 
-        # Send the converted link
-        preamble = f"{message.author} posted: "
-        return_string = preamble + "\n".join(fixed_links)
-        await message.channel.send(return_string)
+        # # Send the converted link
+        # preamble = f"{message.author} posted: "
+        # return_string = preamble + "\n".join(fixed_links)
+        # await message.channel.send(return_string)
 
-        # Optional: delete the original message
-        await message.delete()
+        # # Optional: delete the original message
+        # await message.delete()
 
     # Record data for graphs
     # Command usage data collection
