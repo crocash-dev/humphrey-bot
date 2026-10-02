@@ -20,6 +20,7 @@ from dotenv import load_dotenv
 import wikipediaapi
 import cyrtranslit
 from ddgs import DDGS
+import pint
 
 # testing and debugging.
 # Debug const: if False, do not load data on boot, for quick
@@ -35,6 +36,10 @@ intents.message_content = True
 intents.members = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
+
+# Unit registry for Pint (measurements conversions)
+
+ureg = pint.UnitRegistry()
 
 # DATA COLLECTION
 recent_message_lengths = []
@@ -86,7 +91,8 @@ my_commands = [
     "!sober",
     "!sober_totals",
     "!timezones",
-    "!find_time"
+    "!find_time",
+    "!pint_to_litre"
 ]
 
 
@@ -234,7 +240,7 @@ async def my_on_message(message):
     # Variable for graph recordings
     global recent_message_lengths
     # Variable for insta-embedding
-    matches_insta_link = INSTAGRAM_URL.findall(message.content)
+    # matches_insta_link = INSTAGRAM_URL.findall(message.content)
     # Main body of function
     if message.author == bot.user:
         return
@@ -336,7 +342,7 @@ async def len_histogram(ctx):
     """Have Humphrey produce a histogram of recent message char lengths."""
     x_max = 101
     bin_interval = 5
-    #plt.figure(figsize=(10, 6))
+    # plt.figure(figsize=(10, 6))
     plt.hist(
         recent_message_lengths,
         bins=range(0, x_max, bin_interval),  # 0–50, 50–100, ..., 950–1000
@@ -409,7 +415,7 @@ async def chat_pie(ctx):
 
     print("Users to remove:")
     print(users_to_remove)
-    
+
     for user in users_to_remove:
         if user in user_message_count_copy:
             del user_message_count_copy[user]
@@ -445,7 +451,7 @@ async def command_pie(ctx):
     commands_message_count_copy = commands_message_count.copy()
     print("commands_message_count_copy:")
     print(commands_message_count_copy)
-    
+
     # Sum and remove commands < 5% of total usage
     humphrey_commands = list(commands_message_count_copy.keys())
     counts = list(commands_message_count_copy.values())
@@ -465,7 +471,7 @@ async def command_pie(ctx):
     # Prepare to turn into pie chart
     humphrey_commands = list(commands_message_count_copy.keys())
     counts = list(commands_message_count_copy.values())
-        
+
     plt.pie(
         counts,
         labels=humphrey_commands,
@@ -752,20 +758,25 @@ async def quote_public(ctx):
     print("Channel:")
     print(channel)
     if channel is None:
-        await ctx.send("I couldn't find the memes channel.")
+        await ctx.send("I couldn't find the public channel.")
         return
 
     messages = []
 
     async for message in channel.history(limit=500):
         # Include messages with uploaded files.
-        messages.append(message)
+        first_word = message.content.split(" ")[0]
+        print(f"First word: {first_word}")
+        if message.author not in BOT_USERNAMES:
+            if first_word not in my_commands:
+                messages.append(message)
+                print("Quote Public: Message Appended")
 
     print("Messages:")
     print(messages)
 
     if not messages:
-        await ctx.send("There are no messages in the memes channel.")
+        await ctx.send("There are no messages in the public channel.")
         return
 
     random_message = random.choice(messages)
@@ -846,8 +857,8 @@ async def sober(ctx):
     epoch_time_last_drunk = 1790759144
     now = time.time()
     difference = now - epoch_time_last_drunk
-    
-    total_minutes = difference / 60
+
+    total_minutes = difference // 60
     total_hours = round(total_minutes // 60)
     minutes = round(total_minutes % 60)
     total_days = round(total_hours // 24)
@@ -858,9 +869,37 @@ async def sober(ctx):
     weeks = round(total_weeks % 4)
     total_years = round(total_months // 12)
     months = round(total_months % 12)
-    
-    return_string = f"Joe has been sober for: {total_years} years, {months} months, {weeks} weeks, {days} days, {hours} hours and {minutes} minutes."
-    await ctx.send(return_string)
+
+    return_string = "Joe has been sober for: "
+    if total_years > 0:
+        return_string = return_string + str(total_years) + " years, "
+        print("years")
+    if months > 0:
+        return_string = return_string + str(months) + " months, "
+        print("months")
+    if weeks > 0:
+        return_string = return_string + str(weeks) + " weeks, "
+        print("weeks")
+    if days > 0:
+        return_string = return_string + str(days) + " days, " 
+        print("days")
+    if hours > 0:
+        return_string = return_string + str(hours) + " hours, "
+        print("hours")
+    if minutes > 0:
+        return_string = return_string + " and " + str(minutes) + " minutes."
+        print("minutes")
+    else:
+        return_string = return_string + "."
+        print("else")
+
+    print("Return string: ")
+    print(return_string)
+    actual_return_string = return_string
+    print("actual_return_string: ")
+    print(actual_return_string)
+    # return_string = f"Joe has been sober for: {total_years} years, {months} months, {weeks} weeks, {days} days, {hours} hours and {minutes} minutes."
+    await ctx.send(actual_return_string)
 
 
 # Timezone functions
@@ -891,5 +930,28 @@ async def find_time(ctx, *, zone: str):
     chosen_tz = timezone(zone)
     converted_time = utc_now.astimezone(chosen_tz)
     await ctx.send(converted_time)
+
+
+# Measurements conversions
+
+@bot.command(description="Have Humphrey convert Imperial or US pints to litres.")
+async def pint_to_litre(ctx, us_or_imperial: str, *, value: str):
+    """Usage !pint_to_litre <system> <value_to_convert>"""
+    try:
+        base_value = float(value)
+    except Exception:
+        await ctx.send("That is not a valid number on which to perform the conversion.")
+        return
+
+    if us_or_imperial.lower() == "imperial":
+        return_value = (base_value * ureg.sys.imperial.pint).to("liter")
+    elif us_or_imperial.lower() == "us":
+        return_value = (base_value * ureg.sys.US.pint).to("liter")
+    else:
+        await ctx.send("That is not a valid system of measures for the pint unit.")
+        return
+
+    await ctx.send(return_value)
+
 
 bot.run(token, log_handler=handler, log_level=logging.DEBUG)
