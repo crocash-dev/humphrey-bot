@@ -878,12 +878,12 @@ async def sober(ctx):
     if months == 1:
         return_string = return_string + str(months) + " month, "
     elif months > 1:
-         return_string = return_string + str(months) + " months, "
+        return_string = return_string + str(months) + " months, "
     if weeks == 1:
         return_string = return_string + str(weeks) + " week, "
         print("weeks")
     elif weeks > 1:
-         return_string = return_string + str(weeks) + " weeks, "
+        return_string = return_string + str(weeks) + " weeks, "
     if days == 1:
         return_string = return_string + str(days) + " day, "
         print("days")
