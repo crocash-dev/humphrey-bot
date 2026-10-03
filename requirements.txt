@@ -6,3 +6,4 @@ cyrtrabslit
 aiohttp
 ddgs
 pytz
+pint

@@ -871,24 +871,34 @@ async def sober(ctx):
     months = round(total_months % 12)
 
     return_string = "Joe has been sober for: "
-    if total_years > 0:
+    if total_years == 1:
+        return_string = return_string + str(total_years) + " year, "
+    elif total_years > 1:
         return_string = return_string + str(total_years) + " years, "
-        print("years")
-    if months > 0:
-        return_string = return_string + str(months) + " months, "
-        print("months")
-    if weeks > 0:
-        return_string = return_string + str(weeks) + " weeks, "
+    if months == 1:
+        return_string = return_string + str(months) + " month, "
+    elif months > 1:
+         return_string = return_string + str(months) + " months, "
+    if weeks == 1:
+        return_string = return_string + str(weeks) + " week, "
         print("weeks")
-    if days > 0:
-        return_string = return_string + str(days) + " days, " 
+    elif weeks > 1:
+         return_string = return_string + str(weeks) + " weeks, "
+    if days == 1:
+        return_string = return_string + str(days) + " day, "
         print("days")
-    if hours > 0:
-        return_string = return_string + str(hours) + " hours, "
+    elif days > 1:
+        return_string = return_string + str(days) + " days, "
+    if hours == 1:
+        return_string = return_string + str(hours) + " hour, "
         print("hours")
-    if minutes > 0:
-        return_string = return_string + " and " + str(minutes) + " minutes."
+    elif hours > 1:
+        return_string = return_string + str(hours) + " hours, "
+    if minutes == 1:
+        return_string = return_string + "and " + str(minutes) + " minute."
         print("minutes")
+    elif minutes > 1:
+        return_string = return_string + "and " + str(minutes) + " minutes."
     else:
         return_string = return_string + "."
         print("else")
