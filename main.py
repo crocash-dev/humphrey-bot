@@ -830,7 +830,7 @@ async def sober_totals(ctx):
     days = round(hours_sober / 24, 2)
     if days < 0:
         days = 0
-    weeks = round(days / 7)
+    weeks = round(days / 7, 2)
     if weeks < 0:
         weeks = 0
     months = round(weeks / 4)
