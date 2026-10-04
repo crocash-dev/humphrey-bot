@@ -833,8 +833,8 @@ async def sober_totals(ctx):
     weeks = round(days / 7, 2)
     if weeks < 0:
         weeks = 0
-    months = round(weeks / 4)
-    years = round(months / 12)
+    months = round(weeks / 4, 2)
+    years = round(months / 12, 2)
     return_string = fr"""Joe has been sober for totals of:
     ```
     .---------------------------.
