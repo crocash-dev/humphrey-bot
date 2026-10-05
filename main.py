@@ -24,7 +24,7 @@ import pint
 
 # testing and debugging.
 # Debug const: if False, do not load data on boot, for quick
-LOAD_DATA = False
+LOAD_DATA = True
 BOT_USERNAMES = ("MCbot#9631", "humphrey-bot#5757")
 
 load_dotenv()
@@ -45,6 +45,7 @@ ureg = pint.UnitRegistry()
 recent_message_lengths = []
 user_message_count = defaultdict(int)
 commands_message_count = defaultdict(int)
+user_messages = defaultdict(list)
 
 ROLES = [
     "blue",
@@ -82,7 +83,9 @@ my_commands = [
     "!yt",
     "!img",
     "!meme",
+    "!quote",
     "!quote_public",
+    "!quote_user",
     "!len_histogram",
     "!len_line",
     "!chat_pie",
@@ -200,16 +203,23 @@ async def on_ready():
                             continue
                         # Recent message length data collection
                         recent_message_lengths.append(len(message.content))
-                     
+                        print("Recent length appended.")
+
                         # User message number data collection
                         user_message_count[str(message.author)] += 1
-                    
+                        print(f"user: {message.author} message count incremented")
+
+                        # User message content
+                        user_messages[str(message.author)].append(message)
+                        print(f"user: {message.author} message appended to user_messages")
+
                         # Command usage data collection
                         first_word = message.content.split(" ")[0]
                         if first_word in my_commands:
                             command = first_word
                             commands_message_count[command] += 1
-                          
+                            print(f"commands_message_count for {command} incremented")
+
                 except discord.Forbidden:
                     print(f"No access to #{channel.name}")
 
@@ -266,6 +276,9 @@ async def my_on_message(message):
     # User message count data collection
     user_message_count[str(message.author)] += 1
     print(f"my_on_message: User: {str(message.author)} count: {user_message_count[str(message.author)]}")
+
+    # User message content storage for quote_user
+    user_messages[str(message.author)].append(message)
 
 
 # ctx = context, an object containing the context of the command
@@ -692,7 +705,7 @@ async def img(ctx, *, query: str):
     print(rand_url)
     await ctx.send(rand_url)
 
-    
+
 def get_text_result(query: str):
     ddgs = DDGS()
     results = ddgs.text(query=query, max_results=100)
@@ -706,14 +719,6 @@ def get_text_result(query: str):
 # Text search
 @bot.command(description="Search DuckDuckGo!")
 async def search(ctx, *, query: str):
-    """Have Humphrey search the web!"""
-    # results = ddgs.text(query=query, max_results=50)
-    # if not results:
-    #     await ctx.send("I am sorry, no urls were found.")
-    #     return
-    # print(results)
-    # prelim_result = random.choice(results)
-    # return_value = prelim_result['href']
     try:
         text_result = await asyncio.to_thread(get_text_result, query)
     except ValueError as e:
@@ -783,6 +788,132 @@ async def meme(ctx):
         if embed.thumbnail.url:
             await ctx.send(embed.thumbnail.url)
             return
+
+
+async def generate_random_message(channel_name: str):
+    """Generates random message for quote."""
+    print(f"generate_random_message: channel name: {channel_name}")
+    selected_channel = None
+
+    for guild in bot.guilds:
+        for channel in guild.text_channels:
+            if channel.name.lower() == channel_name.lower():
+                selected_channel = channel
+
+    if not selected_channel:
+        raise ValueError("I could not find this channel.")
+
+    messages = []
+    async for message in selected_channel.history(limit=1000):
+        if message.author not in BOT_USERNAMES:
+            first_word = message.content.split(" ")[0]
+            if first_word not in my_commands:
+                messages.append(message)
+
+    if not messages:
+        raise ValueError("I could not find any messages, I'm sorry.")
+
+    random_message = random.choice(messages)
+    return random_message
+
+
+async def generate_player_message(username: str):
+    """Generates a random message by a player_name"""
+    print("generate_player_message triggered.")
+    username = username.casefold().strip(" ")
+    selected_member = None
+    for guild in bot.guilds:
+        print("generate_player_message: for guild in bot.guilds iteration")
+        async for member in guild.fetch_members(limit=None):
+            print("generate_player_message: for member in guild.fetch_members iteration")
+            print(f"Member: {member}")
+            # member.nick could be None, same for global_name
+
+            nick = (member.nick or "").casefold()
+            print(f"Nick: {nick}")
+            name = (member.name or "").casefold()
+            print(f"Name: {name}")
+            global_name = (member.global_name or "").casefold()
+            print(f"global_name: {global_name}")
+            if username in {nick, name, global_name}:
+                selected_member = str(member)
+                print(f"Member {str(member)} selected")
+                break
+
+        if selected_member is not None:
+            break
+
+    if selected_member is None:
+        raise ValueError("I could not find that user.")
+    messages = user_messages.get(selected_member)
+
+    if not messages:
+        raise ValueError("I'm sorry, I couldn't find any messages by that person.")
+
+    random_message = random.choice(messages)
+    print(f"generate_player_message: random_message: {random_message}")
+    if not random_message:
+        raise ValueError("I'm sorry, I cannot find any messages by that person.")
+
+    return random_message
+
+
+@bot.command(description="Have Humphrey quote a user.")
+async def quote_user(ctx, *, user_nick: str):
+    """Have Humphrey quote a user, usage !quote_user user_nickname"""
+    print("quote_user triggered")
+    try:
+        random_message = await generate_player_message(user_nick)
+    except ValueError as e:
+        print(e)
+        await ctx.send(e)
+        return
+    # Send the random message
+    random_message_content = random_message.content.strip("`")
+    random_message_content = f"```{random_message_content}```"
+    if random_message.attachments:
+        await ctx.send(random_message.attachments[0].url)
+        return
+
+    for embed in random_message.embeds:
+        if embed.image.url:
+            await ctx.send(embed.image.url)
+            return
+
+        if embed.thumbnail.url:
+            await ctx.send(embed.thumbnail.url)
+            return
+
+    await ctx.send(random_message_content)
+
+@bot.command(description="Have Humphrey quote a channel of your choice.")
+async def quote(ctx, *, channel_name: str):
+    """Quote a channel of your choice, usage !quote channel-name"""
+    channel_name = channel_name.lower().strip(" ").strip("#")
+    try:
+        random_message = await generate_random_message(channel_name)
+    except ValueError as e:
+        print(e)
+        await ctx.send(e)
+        return
+    # Send the random message
+    random_message_content = random_message.content.strip("`")
+    random_message_content = f"```{random_message_content}```"
+    if random_message.attachments:
+        await ctx.send(random_message.attachments[0].url)
+        return
+
+    for embed in random_message.embeds:
+        if embed.image.url:
+            await ctx.send(embed.image.url)
+            return
+
+        if embed.thumbnail.url:
+            await ctx.send(embed.thumbnail.url)
+            return
+
+    await ctx.send(random_message_content)
+    return
 
 
 @bot.command(description="Have Humphrey quote public channel!")
