@@ -24,7 +24,7 @@ import pint
 
 # testing and debugging.
 # Debug const: if False, do not load data on boot, for quick
-LOAD_DATA = True
+LOAD_DATA = False
 BOT_USERNAMES = ("MCbot#9631", "humphrey-bot#5757")
 
 load_dotenv()
@@ -200,23 +200,22 @@ async def on_ready():
                             continue
                         # Recent message length data collection
                         recent_message_lengths.append(len(message.content))
-                        print(f"Message: {message} length {len(message.content)} recorded.")
+                     
                         # User message number data collection
                         user_message_count[str(message.author)] += 1
-                        print(f"User: {str(message.author)} count: {user_message_count[str(message.author)]}")
+                    
                         # Command usage data collection
                         first_word = message.content.split(" ")[0]
                         if first_word in my_commands:
                             command = first_word
                             commands_message_count[command] += 1
-                            print(f"Command: {command} incremented.")
+                          
                 except discord.Forbidden:
                     print(f"No access to #{channel.name}")
+
     print(f"on_ready: recent_message_lengths: {recent_message_lengths}")
-    print("on_ready: user_message_count:")
-    print(user_message_count)
-    print("on_ready: commands_message_count")
-    print(commands_message_count)
+    print(f"on_ready: user_message_count: {user_message_count}")
+    print(f"on_ready: commands_message_count: {commands_message_count}")
     print(f"{bot.user.name} is ready for duty.")
 
 
@@ -249,28 +248,6 @@ async def my_on_message(message):
     if any((word in message.content.lower()) for word in bad_words):
         await message.channel.send(
             f"You know {message.author.name}, it is better that everyone get along.")
-    # Embed insta-links
-    # if matches_insta_link:
-    #     fixed_links = []
-    #     for url in matches_insta_link:
-    #         # Preserve the path while changing the hostname
-    #         fixed_url = re.sub(
-    #             r"https?://(?:www\.)?instagram\.com",
-    #             "https://www.hhinstagram.com",
-    #             url,
-    #             flags=re.IGNORECASE
-    #         )
-    #         fixed_url = fixed_url.split("?")[0]
-    #         fixed_links.append(fixed_url)
-
-        # # Send the converted link
-        # preamble = f"{message.author} posted: "
-        # return_string = preamble + "\n".join(fixed_links)
-        # await message.channel.send(return_string)
-
-        # # Optional: delete the original message
-        # await message.delete()
-
     # Record data for graphs
     # Command usage data collection
     first_word = message.content.split(" ")[0]
@@ -389,12 +366,10 @@ async def len_line(ctx):
         await ctx.send(file=discord.File(f, filename="message_length_line_chart.png"))
 
 
-@bot.command(description="User message count pie chart.")
-async def chat_pie(ctx):
-    """Have Humphrey produce a pie chart of user message counts!"""
+def generate_chat_pie_chart():
+    """Runs asynchronously, generates data for chat_pie"""
     if not user_message_count:
-        await ctx.send("I couldn't find any messages to chart.")
-        return
+        raise ValueError("No user messages were found.")
     user_message_count_copy = user_message_count.copy()
     print("user_message_count_copy:")
     print(user_message_count_copy)
@@ -426,6 +401,18 @@ async def chat_pie(ctx):
     users = list(user_message_count_copy.keys())
     counts = list(user_message_count_copy.values())
 
+    return users, counts
+
+
+@bot.command(description="User message count pie chart.")
+async def chat_pie(ctx):
+    """Have Humphrey produce a pie chart of user message counts!"""
+    try:
+        users, counts = await asyncio.to_thread(generate_chat_pie_chart)
+    except ValueError:
+        await ctx.send("I couldn't find any messages to chart.")
+        return
+
     plt.pie(
         counts,
         labels=users,
@@ -442,12 +429,11 @@ async def chat_pie(ctx):
         await ctx.send(file=discord.File(f, "user_message_count_pie_chart.png"))
 
 
-@bot.command(description="Most used commands pie chart.")
-async def command_pie(ctx):
-    """Have Humphrey produce a pie chart of which commands are being used!"""
+def generate_command_pie():
+    """Runs asynchronously, generates data for command_pie"""
     if not commands_message_count:
-        await ctx.send("I couldn't find any messages to chart.")
-        return
+        raise ValueError("generate_command_pie: No command counts in commands_message_count")
+    
     commands_message_count_copy = commands_message_count.copy()
     print("commands_message_count_copy:")
     print(commands_message_count_copy)
@@ -471,6 +457,18 @@ async def command_pie(ctx):
     # Prepare to turn into pie chart
     humphrey_commands = list(commands_message_count_copy.keys())
     counts = list(commands_message_count_copy.values())
+    return humphrey_commands, counts
+
+
+@bot.command(description="Most used commands pie chart.")
+async def command_pie(ctx):
+    """Have Humphrey produce a pie chart of which commands are being used!"""
+    try:
+        humphrey_commands, counts = await asyncio.to_thread(generate_command_pie)
+    except ValueError as e:
+        print(e)
+        await ctx.send("I couldn't find any messages to chart.")
+        return
 
     plt.pie(
         counts,
@@ -488,13 +486,10 @@ async def command_pie(ctx):
         await ctx.send(file=discord.File(f, "commands_message_count_pie_chart.png"))
 
 
-
-
-@bot.command(description="Most used commands bar chart.")
-async def command_bar(ctx):
-    """Have Humphrey produce a bar chart of which commands are being used!"""
+def generate_command_bar():
+    """Runs asynchronously, generates data for command_bar"""
     if not commands_message_count:
-        await ctx.send("I couldn't find any messages to chart.")
+        raise ValueError("generate_command_bar: no commands in commands_message_count")
         return
     commands_message_count_copy = commands_message_count.copy()
     print("commands_message_count_copy:")
@@ -503,6 +498,19 @@ async def command_bar(ctx):
     # Prepare to turn into bar chart
     humphrey_commands = list(commands_message_count_copy.keys())
     counts = list(commands_message_count_copy.values())
+    return humphrey_commands, counts
+
+
+@bot.command(description="Most used commands bar chart.")
+async def command_bar(ctx):
+    """Have Humphrey produce a bar chart of which commands are being used!"""
+    try:
+        humphrey_commands, counts = await asyncio.to_thread(generate_command_bar)
+    except ValueError as e:
+        print(e)
+        await ctx.send("I couldn't find any messages to chart.")
+        return
+
     # Make bar chart
     fig, ax = plt.subplots(figsize=(8, 4))
     ax.barh(
@@ -656,53 +664,74 @@ async def list_colours(ctx):
 # DDGS search functions
 
 # DDGS object for use in functions
-ddgs = DDGS()
+# ddgs = DDGS()
+
+
+def get_images(query: str):
+    """Runs asynchronously, searches ddgs for images."""
+    ddgs = DDGS()
+    results = ddgs.images(query=query, safesearch="moderate", max_results=100)
+    if not results:
+        raise ValueError("No results found")
+    urls = []
+    for result in results:
+        urls.append(result["image"])
+    return urls
 
 
 # Img search
 @bot.command(description="Search DuckDuckGo for an image!")
 async def img(ctx, *, query: str):
     """Have Humphrey find you an image!"""
-    results = ddgs.images(query=query, safesearch="moderate", max_results=50)
-    # converted to list to see if empty
-    if not results:
-        await ctx.send("I am sorry, no urls were found.")
+    try:
+        urls = await asyncio.to_thread(get_images, query)
+    except ValueError as e:
+        await ctx.send(str(e))
         return
-    urls = []
-    for result in results:
-        urls.append(result["image"])
-    print(urls)
-    rand_url = random.choice(urls)
+    rand_url = str(random.choice(urls))
     print(rand_url)
-    await ctx.send(str(rand_url))
+    await ctx.send(rand_url)
+
+    
+def get_text_result(query: str):
+    ddgs = DDGS()
+    results = ddgs.text(query=query, max_results=100)
+    if not results:
+        raise ValueError("No results found.")
+    prelim_result = random.choice(results)
+    text_result = str(prelim_result['href'])
+    return text_result
 
 
 # Text search
 @bot.command(description="Search DuckDuckGo!")
 async def search(ctx, *, query: str):
     """Have Humphrey search the web!"""
-    results = ddgs.text(query=query, max_results=50)
-    if not results:
-        await ctx.send("I am sorry, no urls were found.")
+    # results = ddgs.text(query=query, max_results=50)
+    # if not results:
+    #     await ctx.send("I am sorry, no urls were found.")
+    #     return
+    # print(results)
+    # prelim_result = random.choice(results)
+    # return_value = prelim_result['href']
+    try:
+        text_result = await asyncio.to_thread(get_text_result, query)
+    except ValueError as e:
+        await ctx.send(str(e))
         return
-    print(results)
-    prelim_result = random.choice(results)
-    return_value = prelim_result['href']
-    await ctx.send(return_value)
+
+    await ctx.send(text_result)
 
 
 # Random meme
 
-@bot.command(description="Take a random meme from #memes")
-async def meme(ctx):
-    """Have Humphrey post a meme from #memes"""
-    print("Command !meme triggered.")
+async def generate_random_meme():
+    """Runs asynchronously, generates random message"""
+    print("generate_random_meme triggered")
     channel = bot.get_channel(1540777913757081730)
-    print("Channel:")
-    print(channel)
+
     if channel is None:
-        await ctx.send("I couldn't find the memes channel.")
-        return
+        raise ValueError("I couldn't find the memes channel.")
 
     messages = []
 
@@ -710,6 +739,7 @@ async def meme(ctx):
         # Include messages with uploaded files.
         if message.attachments:
             messages.append(message)
+            print(message)
             continue
 
         # Include messages whose URLs created an image preview.
@@ -723,18 +753,23 @@ async def meme(ctx):
         if has_image_preview:
             messages.append(message)
 
-    print("Messages:")
-    print(messages)
-
     if not messages:
-        await ctx.send("There are no messages in the memes channel.")
+        raise ValueError("There are no messages in the memes channel.")
         return
 
     random_message = random.choice(messages)
-    print("Random message:")
-    print(random_message)
-    print("Random message content:")
-    print(random_message.content)
+    return random_message
+
+
+@bot.command(description="Take a random meme from #memes")
+async def meme(ctx):
+    """Have Humphrey post a meme from #memes"""
+    print("Command !meme triggered.")
+    try:
+        random_message = await generate_random_meme()
+    except ValueError as e:
+        print(e)
+        await ctx.send(e)
 
     if random_message.attachments:
         await ctx.send(random_message.attachments[0].url)
@@ -753,10 +788,8 @@ async def meme(ctx):
 @bot.command(description="Have Humphrey quote public channel!")
 async def quote_public(ctx):
     """Have Humphrey quote a post from public from #memes"""
-    print("Command !quote_public triggered.")
     channel = bot.get_channel(1539717166381793372)
-    print("Channel:")
-    print(channel)
+
     if channel is None:
         await ctx.send("I couldn't find the public channel.")
         return
@@ -772,18 +805,11 @@ async def quote_public(ctx):
                 messages.append(message)
                 print("Quote Public: Message Appended")
 
-    print("Messages:")
-    print(messages)
-
     if not messages:
         await ctx.send("There are no messages in the public channel.")
         return
 
     random_message = random.choice(messages)
-    print("Random message:")
-    print(random_message)
-    print("Random message content:")
-    print(random_message.content)
 
     if random_message.attachments:
         await ctx.send(random_message.attachments[0].url)
@@ -815,6 +841,7 @@ async def moo(ctx):
 """
 
     await ctx.send(f"```{moo_cow}```")
+    return
 
 
 @bot.command(description="Have Humphrey tell you totals of time units since Joe got dunk.")
@@ -837,17 +864,18 @@ async def sober_totals(ctx):
     years = round(months / 12, 2)
     return_string = fr"""Joe has been sober for totals of:
     ```
-    .---------------------------.
-      UNIT      |    TOTAL
-    .---------------------------.
-      Years     |    {years}
-      Months    |    {months}
-      Weeks     |    {weeks}
-      Days      |    {days}
-      Hours     |    {hours_sober}
-      Minutes   |    {minutes_sober}
-    .---------------------------.```"""
+.-----------------------.
+  UNIT      |  TOTAL
+.-----------------------.
+  Years     |  {years}
+  Months    |  {months}
+  Weeks     |  {weeks}
+  Days      |  {days}
+  Hours     |  {hours_sober}
+  Minutes   |  {minutes_sober}
+.-----------------------.```"""
     await ctx.send(return_string)
+    return
 
 
 @bot.command(description="Have Humphrey tell you how long Joe has been sober.")
@@ -910,11 +938,13 @@ async def sober(ctx):
     print(actual_return_string)
     # return_string = f"Joe has been sober for: {total_years} years, {months} months, {weeks} weeks, {days} days, {hours} hours and {minutes} minutes."
     await ctx.send(actual_return_string)
+    return
 
 
 # Timezone functions
 
 def list_timezones():
+    """Runs asynchronously, creates list of timezones."""
     timezone_list = []
     for tz in pytz.all_timezones:
         print(tz)
@@ -926,20 +956,24 @@ def list_timezones():
 async def timezones(ctx):
     """Have Humphrey list useable timezones for !find_time command"""
     await ctx.send("https://gist.github.com/heyalexej/8bf688fd67d7199be4a1682b3eec7568")
+    return
 
 
 @bot.command(description="Find the time right now in any of the timezones listed by !timezones.")
 async def find_time(ctx, *, zone: str):
     """Find the time right now in any of the timezones listed by !timezones."""
-    timezone_list = list_timezones()
+    timezone_list = await asyncio.to_thread(list_timezones)
     print(f"!find_time: {timezone_list}")
-    if zone not in timezone_list:
-        await ctx.send("That's not a valid timezone, I'm afraid.")
-        return
-    utc_now = datetime.now(pytz.utc)
-    chosen_tz = timezone(zone)
-    converted_time = utc_now.astimezone(chosen_tz)
-    await ctx.send(converted_time)
+    for tz in timezone_list:
+        if zone.lower() == tz.lower():
+            utc_now = datetime.now(pytz.utc)
+            chosen_tz = timezone(zone)
+            converted_time = utc_now.astimezone(chosen_tz)
+            await ctx.send(converted_time)
+            return
+
+    await ctx.send("That's not a valid timezone, I'm afraid.")
+    return
 
 
 # Measurements conversions
@@ -962,6 +996,7 @@ async def pint_to_litre(ctx, us_or_imperial: str, *, value: str):
         return
 
     await ctx.send(return_value)
+    return
 
 
 bot.run(token, log_handler=handler, log_level=logging.DEBUG)
