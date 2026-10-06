@@ -69,6 +69,7 @@ ROLES = [
 my_commands = [
     "!help",
     "!list_commands",
+    "!moo",
     "!list_cyr_codes",
     "!list_colours",
     "!pick_colour",
@@ -83,9 +84,11 @@ my_commands = [
     "!yt",
     "!img",
     "!meme",
+    "!random_video",
     "!quote",
     "!quote_public",
-    "!quote_user",
+    "!quote_music",
+    "!quote_channel",
     "!len_histogram",
     "!len_line",
     "!chat_pie",
@@ -209,16 +212,16 @@ async def on_ready():
                         user_message_count[str(message.author)] += 1
                         print(f"user: {message.author} message count incremented")
 
-                        # User message content
-                        user_messages[str(message.author)].append(message)
-                        print(f"user: {message.author} message appended to user_messages")
-
                         # Command usage data collection
                         first_word = message.content.split(" ")[0]
                         if first_word in my_commands:
                             command = first_word
                             commands_message_count[command] += 1
                             print(f"commands_message_count for {command} incremented")
+                        else:
+                            # User message content, only collect if not a command
+                            user_messages[str(message.author)].append(message)
+                            print(f"user: {message.author} message appended to user_messages")
 
                 except discord.Forbidden:
                     print(f"No access to #{channel.name}")
@@ -259,13 +262,6 @@ async def my_on_message(message):
         await message.channel.send(
             f"You know {message.author.name}, it is better that everyone get along.")
     # Record data for graphs
-    # Command usage data collection
-    first_word = message.content.split(" ")[0]
-    if first_word in my_commands:
-        command = first_word
-        commands_message_count[command] += 1
-        print(f"my_on_message: Command: {command} incremented.")
-
     # Recent message length data collection
     recent_message_lengths.append(len(message.content))
     print(f"Message: {message} length {len(message.content)} recorded.")
@@ -277,8 +273,16 @@ async def my_on_message(message):
     user_message_count[str(message.author)] += 1
     print(f"my_on_message: User: {str(message.author)} count: {user_message_count[str(message.author)]}")
 
-    # User message content storage for quote_user
-    user_messages[str(message.author)].append(message)
+    # Command usage data collection
+    first_word = message.content.split(" ")[0]
+    if first_word in my_commands:
+        command = first_word
+        commands_message_count[command] += 1
+        print(f"my_on_message: Command: {command} incremented.")
+    else:
+        # User message content storage for quote, only if not a command
+        user_messages[str(message.author)].append(message)
+        print(f"on_ready: user_message of {message.author} appended to user_messages")
 
 
 # ctx = context, an object containing the context of the command
@@ -859,9 +863,9 @@ async def generate_player_message(username: str):
 
 
 @bot.command(description="Have Humphrey quote a user.")
-async def quote_user(ctx, *, user_nick: str):
+async def quote(ctx, *, user_nick: str):
     """Have Humphrey quote a user, usage !quote_user user_nickname"""
-    print("quote_user triggered")
+    print("quote triggered")
     try:
         random_message = await generate_player_message(user_nick)
     except ValueError as e:
@@ -886,8 +890,9 @@ async def quote_user(ctx, *, user_nick: str):
 
     await ctx.send(random_message_content)
 
+
 @bot.command(description="Have Humphrey quote a channel of your choice.")
-async def quote(ctx, *, channel_name: str):
+async def quote_channel(ctx, *, channel_name: str):
     """Quote a channel of your choice, usage !quote channel-name"""
     channel_name = channel_name.lower().strip(" ").strip("#")
     try:
@@ -913,6 +918,81 @@ async def quote(ctx, *, channel_name: str):
             return
 
     await ctx.send(random_message_content)
+    return
+
+
+@bot.command(description="Have Humphrey grab a video from #random-videos!")
+async def random_video(ctx):
+    """Grab a random video from #random-videos, !random_video"""
+    channel = bot.get_channel(1541218870021460019)
+    messages = []
+    if channel is None:
+        await ctx.send("I couldn't find the #random-videos channel.")
+        return
+
+    async for message in channel.history(limit=1000):
+        first_word = message.content.split(" ")[0]
+        print(f"random_video: first_word: {first_word}")
+
+        if message.author not in BOT_USERNAMES:
+            if first_word not in my_commands:
+                if message.embeds:
+                    messages.append(message)
+                    print("random_video: message appended")
+
+    if not messages:
+        await ctx.send("There are no messages in the #random-videos channel.")
+        return
+
+    random_message = random.choice(messages)
+    if not random_message.embeds:
+        await ctx.send("Message has no attached video.")
+        return
+
+    for embed in random_message.embeds:
+        print("!random_video: FOR EMBED ITERATION")
+        if embed.video:
+            print("!randon_video: if embed.video.url condition passed.")
+            await ctx.send(embed.video.url)
+            return
+
+    return
+
+@bot.command(description="Have Humphrey grab a tune from #music!")
+async def quote_music(ctx):
+    """Grab a song from #music, !quote_music"""
+    channel = bot.get_channel(1540437574810869860)
+    messages = []
+    if channel is None:
+        await ctx.send("I couldn't find the music channel.")
+        return
+
+    async for message in channel.history(limit=1000):
+        first_word = message.content.split(" ")[0]
+        print(f"quote_music: first_word: {first_word}")
+
+        if message.author not in BOT_USERNAMES:
+            if first_word not in my_commands:
+                if message.embeds:
+                    messages.append(message)
+                    print("quote_music: message appended")
+
+    if not messages:
+        await ctx.send("There are no messages in the music channel.")
+        return
+
+    random_message = random.choice(messages)
+    if not random_message.embeds:
+        await ctx.send("Message has no attached music.")
+        return
+
+    for embed in random_message.embeds:
+        print("quote_music: FOR EMBED ITERATION")
+        if embed:
+            print("quote_music: if embed.video.url condition passed.")
+            await ctx.send(embed.url)
+            return
+
     return
 
 
@@ -980,11 +1060,8 @@ async def sober_totals(ctx):
     now = time.time()
     difference = now - 1790759144
 
-    minutes_sober = round(difference / 60)
-    hours_sober = round(minutes_sober / 60)
-    remaining_minutes = round(minutes_sober % 60)
-    if remaining_minutes == 60:
-        remaining_minutes = 0
+    minutes_sober = round(difference / 60, 2)
+    hours_sober = round(minutes_sober / 60, 2)
     days = round(hours_sober / 24, 2)
     if days < 0:
         days = 0
@@ -995,16 +1072,16 @@ async def sober_totals(ctx):
     years = round(months / 12, 2)
     return_string = fr"""Joe has been sober for totals of:
     ```
-.-----------------------.
+.--------------------------.
   UNIT      |  TOTAL
-.-----------------------.
-  Years     |  {years}
-  Months    |  {months}
-  Weeks     |  {weeks}
-  Days      |  {days}
-  Hours     |  {hours_sober}
-  Minutes   |  {minutes_sober}
-.-----------------------.```"""
+.--------------------------.
+  Years     |{years:14.2f}
+  Months    |{months:14.2f}
+  Weeks     |{weeks:14.2f}
+  Days      |{days:14.2f}
+  Hours     |{hours_sober:14.2f}
+  Minutes   |{minutes_sober:14.2f}
+.--------------------------.```"""
     await ctx.send(return_string)
     return
 
@@ -1059,7 +1136,7 @@ async def sober(ctx):
     elif minutes > 1:
         return_string = return_string + "and " + str(minutes) + " minutes."
     else:
-        return_string = return_string + "."
+        return_string = return_string + "precisely."
         print("else")
 
     print("Return string: ")
