@@ -1155,7 +1155,6 @@ def list_timezones():
     """Runs asynchronously, creates list of timezones."""
     timezone_list = []
     for tz in pytz.all_timezones:
-        print(tz)
         timezone_list.append(tz)
     return timezone_list
 
@@ -1171,13 +1170,14 @@ async def timezones(ctx):
 async def find_time(ctx, *, zone: str):
     """Find the time right now in any of the timezones listed by !timezones."""
     timezone_list = await asyncio.to_thread(list_timezones)
-    print(f"!find_time: {timezone_list}")
     for tz in timezone_list:
         if zone.lower() == tz.lower():
             utc_now = datetime.now(pytz.utc)
             chosen_tz = timezone(zone)
             converted_time = utc_now.astimezone(chosen_tz)
-            await ctx.send(converted_time)
+            converted_time = str(converted_time).split(".")
+            print(converted_time)
+            await ctx.send(converted_time[0])
             return
 
     await ctx.send("That's not a valid timezone, I'm afraid.")
