@@ -26,6 +26,8 @@ import pint
 # Debug const: if False, do not load data on boot, for quick
 LOAD_DATA = True
 BOT_USERNAMES = ("MCbot#9631", "humphrey-bot#5757")
+SOBER_EPOCH_TIME = 1791957656
+
 
 load_dotenv()
 token = os.getenv('DISCORD_TOKEN')
@@ -229,6 +231,8 @@ async def on_ready():
     print(f"on_ready: recent_message_lengths: {recent_message_lengths}")
     print(f"on_ready: user_message_count: {user_message_count}")
     print(f"on_ready: commands_message_count: {commands_message_count}")
+    if user_messages:
+        print("user_messages populated")
     print(f"{bot.user.name} is ready for duty.")
 
 
@@ -383,36 +387,27 @@ async def len_line(ctx):
         await ctx.send(file=discord.File(f, filename="message_length_line_chart.png"))
 
 
-def generate_chat_pie_chart():
+def generate_chat_counts():
     """Runs asynchronously, generates data for chat_pie"""
     if not user_message_count:
         raise ValueError("No user messages were found.")
     user_message_count_copy = user_message_count.copy()
-    print("user_message_count_copy:")
-    print(user_message_count_copy)
     bots = user_message_count_copy["MCbot#9631"] + user_message_count_copy["humphrey-bot#5757"]
     one_percent = 0.01 * (sum(user_message_count_copy.values()) - bots)
     others_sum = 0
     users_to_remove = []
 
     for user in user_message_count_copy:
-        print("user iteration")
         if user in ("MCbot#9631", "humphrey-bot#5757"):
             users_to_remove.append(user)
         if user_message_count_copy[user] < one_percent:
-            print("if < 1% entered")
             others_sum += user_message_count_copy[user]
             users_to_remove.append(user)
-            print(f"{user} appended. others_sum: {others_sum}")
-
-    print("Users to remove:")
-    print(users_to_remove)
 
     for user in users_to_remove:
         if user in user_message_count_copy:
             del user_message_count_copy[user]
-            print(f"del op: {user} deleted")
-    print("DEL OPS COMPLETED --------------------------------------------")
+
     user_message_count_copy["others"] = others_sum
 
     users = list(user_message_count_copy.keys())
@@ -421,11 +416,108 @@ def generate_chat_pie_chart():
     return users, counts
 
 
+def generate_char_counts():
+    """Runs in another thread and generates counts for character graphs."""
+    user_messages_copy = user_messages.copy()
+    if user_messages_copy:
+        print("Generate_char_counts: user_messages copy created.")  
+    # if not user_messages_copy:
+    #     raise ValueError("No user messages found.")
+
+    user_character_averages = defaultdict(int)
+    for user in user_messages_copy:
+        total = 0
+        for message in user_messages_copy[user]:
+            total = total + len(message.content)
+            average = total / len(user_messages_copy[user])
+        user_character_averages[user] = average
+
+    print(f"generate_char_counts: user_character_counts: {user_character_averages}")
+
+    # one_percent = 0.01 * sum(user_character_averages.values())
+
+    # users_to_remove = []
+    # others_sum = 0
+
+    # Remove <1%
+    # for user in user_character_averages:
+    #     if user_character_counts[user] < one_percent:
+    #         users_to_remove.append(user)
+    #         others_sum += user_character_counts[user]
+
+    # for user in users_to_remove:
+    #     if user in user_character_counts:
+    #         del user_character_counts[user]
+
+    # user_character_counts["others"] = others_sum
+
+    users = list(user_character_averages.keys())
+    print(f"Generate_char_counts users: {users}")
+    counts = list(user_character_averages.values())
+    print(f"generate_char_counts counts: {counts}")
+
+    return users, counts
+
+
+@bot.command(description="User character count pie chart.")
+async def char_pie(ctx):
+    """Have Humphrey produce a pie chart of character counts per user."""
+    try:
+        users, counts = await asyncio.to_thread(generate_char_counts)
+    except ValueError as e:
+        await ctx.send(e)
+        return
+
+    plt.pie(
+        counts,
+        labels=users,
+        # autopct="%1.1f%%", # shows percentages if enabled
+        startangle=90
+    )
+
+    plt.title("Average Message Character Length by User")
+    plt.axis("equal")
+    plt.savefig("user_char_pie_chart.png")
+    plt.close()
+
+    with open("user_char_pie_chart.png", "rb") as f:
+        await ctx.send(file=discord.File(f, "user_char_pie_chart.png"))
+
+
+@bot.command(description="User character count bar chart.")
+async def char_bar(ctx):
+    try:
+        users, counts = await asyncio.to_thread(generate_char_counts)
+    except ValueError as e:
+        await ctx.send(e)
+        return
+
+    # Make bar chart
+    fig, ax = plt.subplots(figsize=(8, 4))
+    ax.barh(
+        users,
+        counts,
+    )
+
+    fig.subplots_adjust(left=0.2, right=0.95)
+
+    plt.title("Average Character Counts")
+    plt.ylabel("Users")
+    plt.xlabel("Number of Characters")
+    # plt.axis("equal")
+    plt.savefig("char_bar_chart.png")
+    plt.close()
+
+    with open("char_bar_chart.png", "rb") as f:
+        await ctx.send(file=discord.File(f, "char_bar_chart.png"))
+
+
+# Chat pie and chat bar 
 @bot.command(description="User message count pie chart.")
 async def chat_pie(ctx):
     """Have Humphrey produce a pie chart of user message counts!"""
     try:
-        users, counts = await asyncio.to_thread(generate_chat_pie_chart)
+        users, counts = await asyncio.to_thread(generate_chat_counts)
     except ValueError:
         await ctx.send("I couldn't find any messages to chart.")
         return
@@ -446,6 +538,35 @@ async def chat_pie(ctx):
         await ctx.send(file=discord.File(f, "user_message_count_pie_chart.png"))
 
 
+@bot.command(description="Create a bar chart of users by number of messages.")
+async def chat_bar(ctx):
+    try:
+        users, counts = await asyncio.to_thread(generate_chat_counts)
+    except ValueError:
+        await ctx.send("I couldn't find any messages to chart.")
+        return
+
+    # Make bar chart
+    fig, ax = plt.subplots(figsize=(8, 4))
+    ax.barh(
+        users,
+        counts,
+    )
+
+    fig.subplots_adjust(left=0.2, right=0.95)
+
+    plt.title("Chat Messages")
+    plt.ylabel("Users")
+    plt.xlabel("Number of Messages")
+    # plt.axis("equal")
+    plt.savefig("chat_bar_chart.png")
+    plt.close()
+
+    with open("chat_bar_chart.png", "rb") as f:
+        await ctx.send(file=discord.File(f, "chat_bar_chart.png"))
+
+
+# Command Pie and Command Bar
 def generate_command_pie():
     """Runs asynchronously, generates data for command_pie"""
     if not commands_message_count:
@@ -1058,7 +1179,7 @@ async def moo(ctx):
 @bot.command(description="Have Humphrey tell you totals of time units since Joe got dunk.")
 async def sober_totals(ctx):
     now = time.time()
-    difference = now - 1790759144
+    difference = now - SOBER_EPOCH_TIME
 
     minutes_sober = round(difference / 60, 2)
     hours_sober = round(minutes_sober / 60, 2)
@@ -1090,7 +1211,8 @@ async def sober_totals(ctx):
 async def sober(ctx):
     """Have Humphrey tell you how long Joe has been sober."""
     # Calculation of seconds since sober
-    epoch_time_last_drunk = 1790759144
+    # epoch_time_last_drunk = 1790759144
+    epoch_time_last_drunk = SOBER_EPOCH_TIME
     now = time.time()
     difference = now - epoch_time_last_drunk
 
