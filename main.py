@@ -25,7 +25,7 @@ import pint
 # testing and debugging.
 # Debug const: if False, do not load data on boot, for quick
 LOAD_DATA = True
-BOT_USERNAMES = ("MCbot#9631", "humphrey-bot#5757")
+BOT_USERNAMES = ("MCbot#9631", "humphrey-bot#5757", "Texit#0796")
 SOBER_EPOCH_TIME = 1791957656
 
 
@@ -100,6 +100,7 @@ my_commands = [
     "!sober_totals",
     "!timezones",
     "!find_time",
+    "!gmt",
     "!pint_to_litre"
 ]
 
@@ -116,7 +117,44 @@ rinpoche_quotes = [
     "Compassion is the spontaneous wisdom of the heart. It's always with us. It always has been, and always will be. When it arises in us, we've simply learned to see how strong and safe we really are.",
     "Any daily activity can be used as an opportunity for meditation.",
     "Being human means having power; specifically, the power to accomplish whatever we want.",
-    "It’s so easy to think that we’re the only ones who suffer, while other people are somehow immune to pain, as though they’d been born with some kind of special knowledge about being happy, that, through some cosmic accident, we never received. Thinking in this way, we make our own problems seem much bigger than they really are."
+    "It’s so easy to think that we’re the only ones who suffer, while other people are somehow immune to pain, as though they’d been born with some kind of special knowledge about being happy, that, through some cosmic accident, we never received. Thinking in this way, we make our own problems seem much bigger than they really are.",
+    "Happiness and unhappiness are not primarily created by the material world or the physical body. First and foremost, they are decisions of the mind.",
+    "When we become fixed in our perceptions we lose our ability to fly.",
+    "Meditation is actually a very simple exercise in resting in the natural state of your present mind, and allowing yourself to be simply and clearly present to whatever thoughts, sensations, or emotions occur.",
+    "Not recognizing natural mind is simply an example of the mind’s unlimited capacity to create whatever it wants.",
+    "Practice is personal; no two people’s experiences are alike.",
+    "Emotional states are fairly quick bursts of neuronal gossip. Traits, on the other hand, are more like the neuronal equivalent of committed relationships.",
+    "If everything were permanent, singular, or independent, nothing would change.",
+    "The best part of all is that no matter how long you practice, or what method you use, every technique of Buddhist meditation ultimately generates compassion.",
+    "When you see your own desire to be happy, you can’t avoid seeing the same desire in others.",
+    "We’re all buddhas. We just don’t recognize it.",
+    "The expectations you bring to meditation practice are often the greatest obstacles you will encounter.",
+    "Within our perceived weaknesses and imperfections lies the key to realizing our true strength.",
+    "Simply notice that you're aware. At any given moment, you can choose to follow the chain of thoughts, emotions, and sensations that reinforce a perception of yourself as vulnerable and limited, or to remember that your true nature is pure, unconditioned, and incapable of being harmed.",
+    "So overall, though my life is far from perfect, I'm contented with it. And in a peculiar way, I'm grateful for the troubling emotions I experienced. The obstacles we face in life can provide powerful incentives for change.",
+    "When you transform your mind, everything you experience is transformed.",
+    "If you don’t try to stop whatever is going on in your mind, but merely observe it, eventually you’ll begin to feel a tremendous sense of relaxation, a vast sense of openness within your mind - which is in fact your natural mind, the naturally unperturbed background against which various thoughts come and go.",
+    "Meditation is actually a very simple exercise in resting in the natural state of your present mind, and allowing yourself to be simply and clearly present to whatever thoughts, sensations, or emotions occur.",
+    "You don't want to block your thoughts, emotions, and so on; nor do you want to chase after them. If you chase after them, if you let them lead you, they begin to define you, and you lose your ability to respond openly and spontaneously in the present moment. On the other hand, if you attempt to block your thoughts, your mind can become quite tight and small.",
+    "You don't want to block your thoughts, emotions, and so on; nor do you want to chase after them. If you chase after them, if you let them lead you, they begin to define you, and you lose your ability to respond openly and spontaneously in the present moment. On the other hand, if you attempt to block your thoughts, your mind can become quite tight and small.",
+    "The Buddha said that all conscious beings possess an enlightened nature. Because of that, we have this natural purity, peacefulness and power. We can rest the mind naturally because we are already in possession of these qualities. If one can rest the mind naturally, that's the best meditation.",
+    "Any attempt to capture the direct experience of the nature of mind in words is impossible. The best that can be said is that it is immeasurably peaceful and, once stabilized through repeated experience, virtually unshakable. It's an experience of absolute well-being that radiates through all physical, emotional and mental states-even those that might ordinarily be labeled as unpleasant.",
+    "Ignorance, vulnerability, fear, anger, and desire are expressions of the infinite potential of your buddha nature. There's nothing inherently wrong or right with making such choices. The fruit of Buddhist practice is simply the recognition that these and other mental afflictions are nothing more or less than choices available to us because our real nature is infinite in scope.",
+    "Ignorance, vulnerability, fear, anger, and desire are expressions of the infinite potential of your buddha nature. There's nothing inherently wrong or right with making such choices. The fruit of Buddhist practice is simply the recognition that these and other mental afflictions are nothing more or less than choices available to us because our real nature is infinite in scope.",
+    "To cut through problems, we need problems.",
+    "Though we may be genetically wired for temporary happiness, we've also been gifted with the ability to recognize within ourselves a more profound and lasting sense of confidence, peace, and well-being. Among sentient beings, human beings appear to stand alone in their ability to recognize the necessity to forge a bond between reason, emotion, and their instinct to survive, and in doing so create a universe-not only for themselves and the human generations that follow, but also for all creatures who feel pain, fear and suffering-in which we are all able to coexist contentedly and peaceably.",
+    "A disciplined mind invites true joy.",
+    "We choose ignorance because we can. We choose awareness because we can. Samsara and nirvana are simply different points of view based on the choices we make in how to examine and understand our experience. There’s nothing magical about nirvana and nothing bad or wrong about samsara. If you’re determined to think of yourself as limited, fearful, vulnerable, or scarred by past experience, know only that you have chosen to do so, and that the opportunity to experience yourself differently is always available.",
+    "Daily life provides countless occasions for adapting to change and impermanence. Yet we squander these precious opportunities, assuming that we have all the time in the world.",
+    "Right here, I thought, right now, is where the suffering arises. Between the sound and the projection, between things as-they-are and things as-we-want-them-to-be. This is what the Buddha taught: To misperceive reality is to suffer.",
+    "The funny thing about the mind is that if you ask a question and then listen quietly, the answer usually appears.",
+    "We do not need to get rid of the ego—this unchanging, solid, and unhealthy sense of self—because it never existed in the first place.",
+    "The essence of Buddhist practice is not so much an effort at changing your thoughts or your behavior so that you can become a better person, but in realizing that no matter what you might think about the circumstances that define your life, you’re already good, whole, and complete. It’s about recognizing the inherent potential of your mind. In other words, Buddhism is not so much concerned with getting well as with recognizing that you are, right here, right now, as whole, as good, as essentially well as you could ever hope to be.",
+    "Nothing endures but change, and accepting this has the potential to transform the dread of dying into joyful living.",
+    "Confusion, I was taught, is the beginning of understanding,",
+    "The teachings of the Buddha—and the lesson inherent in this exercise in non-meditation—is that if we allow ourselves to relax and take a mental step back, we can begin to recognize that all these different thoughts are simply coming and going within the context of an unlimited mind, which, like space, remains fundamentally unperturbed by whatever occurs within it.",
+    "...I began to see that when the pace of external material progress exceeded the development of inner knowledge, people seemed to suffer deep emotional conflicts without any internal method of dealing with them. An abundance of material items provides such a variety of external distractions that people lose the connection ito their inner lives.",
+    "All phenomena are expressions of the mind."
 ]
 
 # latin_to_cyrillic lookalike for fun_echo
@@ -410,8 +448,23 @@ def generate_chat_counts():
 
     user_message_count_copy["others"] = others_sum
 
-    users = list(user_message_count_copy.keys())
-    counts = list(user_message_count_copy.values())
+    # variables for sorting and return
+    users_counts_tups = []
+    users = []
+    counts = []
+    # Create list of tuples, sort it, and append to users, counts list
+    # such that they are in sorted order
+    for user in user_message_count_copy:
+        users_counts_tups.append((user, user_message_count_copy[user]))
+    # Sort list of tuples
+    sorted_users_counts = sorted(users_counts_tups, key=lambda x: x[1])
+    # append to listsf for return
+    for user in sorted_users_counts:
+        users.append(user[0])
+        counts.append(user[1])
+
+    # users = list(user_message_count_copy.keys())
+    # counts = list(user_message_count_copy.values())
 
     return users, counts
 
@@ -434,27 +487,25 @@ def generate_char_counts():
 
     print(f"generate_char_counts: user_character_counts: {user_character_averages}")
 
-    # one_percent = 0.01 * sum(user_character_averages.values())
+    # variables for counting and return 
+    users_char_avgs_tups = []
+    users = []
+    counts = []
+    # Create list of tuples, sort it, and append to users, counts list
+    # such that they are in sorted order
+    for user in user_character_averages:
+        users_char_avgs_tups.append((user, user_character_averages[user]))
+    # Sort list of tuples
+    sorted_users_char_avgs = sorted(users_char_avgs_tups, key=lambda x: x[1])
+    # append to listsf for return
+    for user in sorted_users_char_avgs:
+        users.append(user[0])
+        counts.append(user[1])
 
-    # users_to_remove = []
-    # others_sum = 0
-
-    # Remove <1%
-    # for user in user_character_averages:
-    #     if user_character_counts[user] < one_percent:
-    #         users_to_remove.append(user)
-    #         others_sum += user_character_counts[user]
-
-    # for user in users_to_remove:
-    #     if user in user_character_counts:
-    #         del user_character_counts[user]
-
-    # user_character_counts["others"] = others_sum
-
-    users = list(user_character_averages.keys())
-    print(f"Generate_char_counts users: {users}")
-    counts = list(user_character_averages.values())
-    print(f"generate_char_counts counts: {counts}")
+    # users = list(user_character_averages.keys())
+    # print(f"Generate_char_counts users: {users}")
+    # counts = list(user_character_averages.values())
+    # print(f"generate_char_counts counts: {counts}")
 
     return users, counts
 
@@ -747,7 +798,7 @@ async def yt(ctx, *, query: str):
         "part": "snippet",
         "q": query,
         "type": "video",
-        "maxResults": 1,
+        "maxResults": 50,
         "order": "relevance",
         "key": os.getenv("YOUTUBE_API_KEY"),
     }
@@ -1305,6 +1356,11 @@ async def find_time(ctx, *, zone: str):
     await ctx.send("That's not a valid timezone, I'm afraid.")
     return
 
+
+@bot.command(description="Time in GMT (UTC-0)")
+async def gmt(ctx):
+    utc = datetime.now(pytz.utc)
+    await ctx.send(utc)
 
 # Measurements conversions
 
