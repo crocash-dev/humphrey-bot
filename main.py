@@ -4,12 +4,17 @@ import random
 import logging
 import re
 import time
+import datetime as dt
 from datetime import datetime
+from zoneinfo import ZoneInfo
 import asyncio
 from collections import defaultdict
+
 import aiohttp
 import matplotlib.pyplot as plt
+
 import discord
+from discord.ext import tasks
 
 from pytz import timezone
 import pytz
@@ -25,8 +30,8 @@ import pint
 # testing and debugging.
 # Debug const: if False, do not load data on boot, for quick
 LOAD_DATA = True
-BOT_USERNAMES = ("MCbot#9631", "humphrey-bot#5757", "Texit#0796")
-SOBER_EPOCH_TIME = 1791957656
+BOT_USERNAMES = ("MCbot#9631", "humphrey-bot#5757", "TeXit#0796")
+SOBER_EPOCH_TIME = 1792929600
 
 
 load_dotenv()
@@ -48,6 +53,23 @@ recent_message_lengths = []
 user_message_count = defaultdict(int)
 commands_message_count = defaultdict(int)
 user_messages = defaultdict(list)
+
+# Joe's Tablet Reminders
+
+JOES_CHANNEL_ID = 1562883937574068254
+JOES_USER_ID = 686395163416723652
+
+
+JOES_TIMEZONE = ZoneInfo("Europe/London")
+
+reminder_times = [
+    dt.time(hour=10, minute=0, tzinfo=JOES_TIMEZONE),
+    dt.time(hour=19, minute=15, tzinfo=JOES_TIMEZONE),
+]
+
+REMINDER = "Take your tablets, Joe!"
+
+# roles
 
 ROLES = [
     "blue",
@@ -232,10 +254,21 @@ leet_map = str.maketrans({
     "w": "\\/\\/", "x": "><", "y": "¥", "z": "2",
 })
 
+@tasks.loop(time=reminder_times)
+async def daily_reminder():
+    channel = bot.get_channel(JOES_CHANNEL_ID)
+    if channel is not None:
+        await channel.send(
+            f"<@{JOES_USER_ID}> {REMINDER}",
+            allowed_mentions=discord.AllowedMentions(users=True),
+        )
+
 
 @bot.event
 async def on_ready():
     """On ready"""
+    if not daily_reminder.is_running():
+        daily_reminder.start()
     if LOAD_DATA:
         for guild in bot.guilds:
             for channel in guild.text_channels:
@@ -430,7 +463,7 @@ def generate_chat_counts():
     if not user_message_count:
         raise ValueError("No user messages were found.")
     user_message_count_copy = user_message_count.copy()
-    bots = user_message_count_copy["MCbot#9631"] + user_message_count_copy["humphrey-bot#5757"]
+    bots = user_message_count_copy["MCbot#9631"] + user_message_count_copy["humphrey-bot#5757"] + user_message_count_copy["TeXit#0796"]
     one_percent = 0.01 * (sum(user_message_count_copy.values()) - bots)
     others_sum = 0
     users_to_remove = []
@@ -472,12 +505,14 @@ def generate_chat_counts():
 def generate_char_counts():
     """Runs in another thread and generates counts for character graphs."""
     user_messages_copy = user_messages.copy()
+
     if user_messages_copy:
-        print("Generate_char_counts: user_messages copy created.")  
-    # if not user_messages_copy:
-    #     raise ValueError("No user messages found.")
+        print("Generate_char_counts: user_messages copy created.")
+    if not user_messages_copy:
+        raise ValueError("No user messages found.")
 
     user_character_averages = defaultdict(int)
+
     for user in user_messages_copy:
         total = 0
         for message in user_messages_copy[user]:
@@ -485,12 +520,35 @@ def generate_char_counts():
             average = total / len(user_messages_copy[user])
         user_character_averages[user] = average
 
+    # Remove < 5%ers
+    bots = user_character_averages["MCbot#9631"] + user_character_averages["humphrey-bot#5757"] + user_character_averages["TeXit#0796"]
+    users_to_remove = []
+    others_sum = 0
+    others_avg = 0
+    percentage  = 0.02 * (sum(user_character_averages.values()) - bots)
+
+    for user in user_character_averages:
+        if user_character_averages[user] < percentage:
+            users_to_remove.append(user)
+            others_sum += user_character_averages[user]
+
+    others_avg = others_sum / len(users_to_remove)
+    # Del relevant members
+
+    for user in users_to_remove:
+        del user_character_averages[user]
+
+    # Add others:
+
+    user_character_averages["others"] = others_avg
+
     print(f"generate_char_counts: user_character_counts: {user_character_averages}")
 
-    # variables for counting and return 
+    # variables for counting and return
     users_char_avgs_tups = []
     users = []
     counts = []
+
     # Create list of tuples, sort it, and append to users, counts list
     # such that they are in sorted order
     for user in user_character_averages:
@@ -622,7 +680,7 @@ def generate_command_pie():
     """Runs asynchronously, generates data for command_pie"""
     if not commands_message_count:
         raise ValueError("generate_command_pie: No command counts in commands_message_count")
-    
+
     commands_message_count_copy = commands_message_count.copy()
     print("commands_message_count_copy:")
     print(commands_message_count_copy)
@@ -798,7 +856,7 @@ async def yt(ctx, *, query: str):
         "part": "snippet",
         "q": query,
         "type": "video",
-        "maxResults": 50,
+        "maxResults": 1,
         "order": "relevance",
         "key": os.getenv("YOUTUBE_API_KEY"),
     }
@@ -821,7 +879,7 @@ async def yt(ctx, *, query: str):
         await ctx.send("No YouTube videos found.")
         return
 
-    video = random.choice(results)
+    video = results[0]
     video_id = video["id"]["videoId"]
 
     video_url = f"https://www.youtube.com/watch?v={video_id}"
@@ -857,7 +915,7 @@ async def list_colours(ctx):
 
 
 def get_images(query: str):
-    """Runs asynchronously, searches ddgs for images."""
+    """Runs synchronously, searches ddgs for images."""
     ddgs = DDGS()
     results = ddgs.images(query=query, safesearch="moderate", max_results=100)
     if not results:
@@ -907,7 +965,7 @@ async def search(ctx, *, query: str):
 # Random meme
 
 async def generate_random_meme():
-    """Runs asynchronously, generates random message"""
+    """Runs synchronously, generates random message"""
     print("generate_random_meme triggered")
     channel = bot.get_channel(1540777913757081730)
 
@@ -1229,6 +1287,7 @@ async def moo(ctx):
 
 @bot.command(description="Have Humphrey tell you totals of time units since Joe got dunk.")
 async def sober_totals(ctx):
+    """Totals in standard time units that Joe has been sober."""
     now = time.time()
     difference = now - SOBER_EPOCH_TIME
 
@@ -1325,7 +1384,7 @@ async def sober(ctx):
 # Timezone functions
 
 def list_timezones():
-    """Runs asynchronously, creates list of timezones."""
+    """Runs synchronously in worker thread, creates list of timezones."""
     timezone_list = []
     for tz in pytz.all_timezones:
         timezone_list.append(tz)
@@ -1362,8 +1421,8 @@ async def gmt(ctx):
     utc = datetime.now(pytz.utc)
     await ctx.send(utc)
 
-# Measurements conversions
 
+# Measurements conversions
 @bot.command(description="Have Humphrey convert Imperial or US pints to litres.")
 async def pint_to_litre(ctx, us_or_imperial: str, *, value: str):
     """Usage !pint_to_litre <system> <value_to_convert>"""
