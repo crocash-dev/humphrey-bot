@@ -254,14 +254,19 @@ leet_map = str.maketrans({
     "w": "\\/\\/", "x": "><", "y": "¥", "z": "2",
 })
 
+
 @tasks.loop(time=reminder_times)
 async def daily_reminder():
-    channel = bot.get_channel(JOES_CHANNEL_ID)
-    if channel is not None:
-        await channel.send(
-            f"<@{JOES_USER_ID}> {REMINDER}",
-            allowed_mentions=discord.AllowedMentions(users=True),
-        )
+    user = bot.get_user(JOES_USER_ID)
+    # channel = bot.get_channel(JOES_CHANNEL_ID)
+    # if channel is not None:
+    #     await channel.send(
+    #         f"<@{JOES_USER_ID}> {REMINDER}",
+    #         allowed_mentions=discord.AllowedMentions(users=True),
+    #     )
+    await user.send(
+        f"{REMINDER}"
+    )
 
 
 @bot.event
