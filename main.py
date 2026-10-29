@@ -55,11 +55,7 @@ commands_message_count = defaultdict(int)
 user_messages = defaultdict(list)
 
 # Joe's Tablet Reminders
-
-JOES_CHANNEL_ID = 1562883937574068254
 JOES_USER_ID = 686395163416723652
-
-
 JOES_TIMEZONE = ZoneInfo("Europe/London")
 
 reminder_times = [
@@ -318,7 +314,7 @@ async def on_ready():
 #     await member.send(f"Welcome to Joe's Server, {member.name}")
 
 
-bad_words = ["simian", "brutish", "brute", "falklands", "malvinas"]
+bad_words = ["simian", "brutish", "brute"]
 INSTAGRAM_URL = re.compile(
     r"https?://(?:www\.)?instagram\.com/[^\s<>()]+",
     re.IGNORECASE
